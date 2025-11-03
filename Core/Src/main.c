@@ -94,9 +94,6 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   //uint8_t tx_data = 1;
-  uint8_t reg = REG_FIFO_START;
-  uint8_t tx_data = 0xA5; 
-  uint8_t rx_data = 0x00;
 
   /* USER CODE END 2 */
 
@@ -107,12 +104,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_I2C_Master_Transmit(&hi2c1, SLAVE_ADDR, &reg, 1, HAL_MAX_DELAY);
-    HAL_I2C_Master_Transmit(&hi2c1, SLAVE_ADDR, &tx_data, 1, HAL_MAX_DELAY);
-    HAL_Delay(100);
-    HAL_I2C_Master_Transmit(&hi2c1, SLAVE_ADDR, &reg, 1, HAL_MAX_DELAY);
-    HAL_I2C_Master_Receive(&hi2c1, SLAVE_ADDR, &rx_data, 1, HAL_MAX_DELAY);
-    HAL_Delay(100);
+
     // HAL_I2C_Master_Transmit(&hi2c1, SLAVE_ADDR, &tx_data, 1, HAL_MAX_DELAY);
 
     // tx_data = !tx_data;
@@ -169,6 +161,33 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+uint8_t reg = REG_FIFO_START;
+uint8_t data;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+    if (GPIO_Pin == GPIO_PIN_0)
+    {
+        //HAL_I2C_Mem_Read(&hi2c1, SLAVE_ADDR, reg, 1, &data, 1, HAL_MAX_DELAY);
+        HAL_I2C_Master_Transmit_IT(&hi2c1, SLAVE_ADDR, &reg, 1);
+    }
+}
+
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) 
+{
+    if (hi2c->Instance == I2C1) 
+    {
+        HAL_I2C_Master_Receive_IT(&hi2c1, SLAVE_ADDR, &data, 1);
+    }
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        HAL_UART_Transmit(&huart2, &data, 1, HAL_MAX_DELAY);;
+    }
+}
 
 /* USER CODE END 4 */
 
